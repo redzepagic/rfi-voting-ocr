@@ -1,0 +1,354 @@
+Here's a comprehensive prompt for the voting tablet app:
+Create a tablet-optimized voting scanner application for the electronic voting system in Bosnian language.
+
+## Technical Requirements:
+- React with Vite
+- shadcn/ui components with blue theme (#003893)
+- Tailwind CSS
+- Framer Motion for animations
+- Mock scanning simulation
+- Optimized for tablet (1024x768 resolution)
+- Full-screen kiosk mode design
+
+## App Flow & Screens:
+
+### 1. WELCOME SCREEN (Initial):
+┌──────────────────────────────────────────┐
+│                                          │
+│         Grb BiH    CIK Logo            │
+│                                          │
+│    DOBRODOŠLI NA GLASAČKO MJESTO        │
+│           Opština Centar                │
+│         Glasačko mjesto #1234           │
+│                                          │
+│         [POČNI GLASANJE]                │
+│                                          │
+│    Pritisnite dugme za početak          │
+└──────────────────────────────────────────┘
+
+### 2. INSTRUCTION SCREEN:
+┌──────────────────────────────────────────┐
+│         UPUTSTVO ZA GLASANJE             │
+│                                          │
+│  1. ✓ Označite vašeg kandidata          │
+│     [Visual diagram showing marking]     │
+│                                          │
+│  2. ✓ Preklopite glasački listić        │
+│     [Folding animation/diagram]         │
+│                                          │
+│  3. ✓ Ubacite listić u skener          │
+│     [Scanner slot animation]            │
+│                                          │
+│  ⚠️ VAŽNO:                              │
+│  • Označite SAMO JEDNOG kandidata       │
+│  • Koristite samo plavu hemijsku        │
+│  • Ne savijajte ili oštećujte listić   │
+│                                          │
+│         [RAZUMIJEM]                     │
+└──────────────────────────────────────────┘
+
+### 3. READY TO SCAN SCREEN:
+┌──────────────────────────────────────────┐
+│                                          │
+│         SKENER JE SPREMAN               │
+│                                          │
+│      ╔══════════════════╗              │
+│      ║  ↓  ↓  ↓  ↓  ↓  ║  (animated)  │
+│      ║                   ║              │
+│      ║  UBACITE LISTIĆ  ║              │
+│      ║                   ║              │
+│      ╚══════════════════╝              │
+│                                          │
+│   Pažljivo ubacite glasački listić      │
+│         u označeni otvor                │
+│                                          │
+│         [OTKAŽI GLASANJE]               │
+└──────────────────────────────────────────┘
+
+### 4. SCANNING IN PROGRESS:
+┌──────────────────────────────────────────┐
+│                                          │
+│       SKENIRANJE U TOKU...              │
+│                                          │
+│         [Rotating spinner]              │
+│         ████████░░░░ 75%               │
+│                                          │
+│    Molimo ne dirajte skener            │
+│                                          │
+│    • Provjera validnosti...✓           │
+│    • Čitanje izbora...✓                │
+│    • Verifikacija...⏳                 │
+│                                          │
+└──────────────────────────────────────────┘
+
+### 5A. SUCCESS SCREEN:
+┌──────────────────────────────────────────┐
+│                                          │
+│            ✓ USPJEŠNO!                  │
+│     [Green checkmark animation]         │
+│                                          │
+│    VAŠ GLAS JE USPJEŠNO ZABILJEŽEN     │
+│                                          │
+│    Broj glasačkog listića: #789456      │
+│    Vrijeme: 14:35:22                    │
+│    Status: VALJAN                       │
+│                                          │
+│    Vaš glas je siguran i anoniman      │
+│                                          │
+│         [ZAVRŠI] (10s)                  │
+│                                          │
+│  Automatski zatvaranje za 10 sekundi... │
+└──────────────────────────────────────────┘
+
+### 5B. FAILURE SCREEN:
+┌──────────────────────────────────────────┐
+│                                          │
+│            ⚠️ GREŠKA                    │
+│       [Red X animation]                 │
+│                                          │
+│    LISTIĆ NIJE MOGAO BITI OBRAĐEN      │
+│                                          │
+│    Razlog: [Error reason]              │
+│    • Označeno više kandidata           │
+│    • Listić je oštećen                │
+│    • Nečitljive oznake                │
+│                                          │
+│   Šta želite da uradite?               │
+│                                          │
+│   [POKUŠAJ PONOVO]  [NOVI LISTIĆ]     │
+│                                          │
+│        [POZOVI POMOĆ]                  │
+└──────────────────────────────────────────┘
+
+### 5C. INVALID BUT ACCEPTED:
+┌──────────────────────────────────────────┐
+│                                          │
+│         ⚠️ NEVAŽEĆI LISTIĆ             │
+│                                          │
+│   Vaš listić je označen kao NEVAŽEĆI   │
+│                                          │
+│   Razlog: [Specific reason]            │
+│                                          │
+│   Da li prihvatate ovaj status?        │
+│                                          │
+│   [DA, PRIHVATAM]  [ŽELIM NOVI LISTIĆ] │
+│                                          │
+│         [POZOVI KOMISIJU]              │
+└──────────────────────────────────────────┘
+
+## Mock Data & Scenarios:
+```javascript
+const mockScanResults = [
+  {
+    id: 1,
+    result: "success",
+    ballotNumber: "789456",
+    timestamp: new Date(),
+    candidate: "Kandidat 1",
+    processingTime: 3500
+  },
+  {
+    id: 2,
+    result: "error",
+    errorType: "multiple_selections",
+    errorMessage: "Označeno više od jednog kandidata",
+    canRetry: true
+  },
+  {
+    id: 3,
+    result: "error",
+    errorType: "damaged",
+    errorMessage: "Listić je oštećen ili nečitljiv",
+    canRetry: true
+  },
+  {
+    id: 4,
+    result: "invalid",
+    reason: "Nedozvoljena oznaka na listiću",
+    canAccept: true
+  }
+];
+
+// Simulate random scan result
+const simulateScan = () => {
+  return new Promise((resolve) => {
+    // Show progress for 3-5 seconds
+    const delay = Math.random() * 2000 + 3000;
+    setTimeout(() => {
+      // 70% success, 20% error, 10% invalid
+      const rand = Math.random();
+      if (rand < 0.7) {
+        resolve(mockScanResults[0]);
+      } else if (rand < 0.9) {
+        resolve(mockScanResults[1]);
+      } else {
+        resolve(mockScanResults[3]);
+      }
+    }, delay);
+  });
+};
+Features & Interactions:
+1. Auto-timeout:
+
+Each screen auto-advances after inactivity
+Welcome: Returns after 30s of inactivity
+Success: Auto-close after 10s
+Error: No timeout (requires action)
+
+2. Sound Effects:
+
+Success sound: Pleasant chime
+Error sound: Gentle alert tone
+Button press: Soft click
+Scanning: Mechanical whir simulation
+
+3. Animations:
+
+Page transitions: Smooth slide
+Success: Confetti or checkmark animation
+Error: Shake animation
+Scanning: Progressive fill bar
+Instructions: Step-by-step highlight
+
+4. Admin Panel (Hidden):
+
+Triple-tap top-right corner to access
+PIN: 1234
+Options:
+
+View statistics
+Force success/error
+Reset application
+Change voting location info
+
+
+
+5. Statistics Tracking:
+javascriptconst stats = {
+  totalScans: 0,
+  successful: 0,
+  failed: 0,
+  invalid: 0,
+  retries: 0,
+  averageTime: 0,
+  lastScan: null,
+  errors: {
+    multiple_selections: 0,
+    damaged: 0,
+    unreadable: 0
+  }
+};
+UI Components (shadcn):
+
+Button (large, touch-friendly, min 60px height)
+Card for content sections
+Alert for error messages
+Progress for scanning
+Badge for status indicators
+Dialog for admin panel
+Toast for system messages
+AnimatePresence for transitions
+
+Color Scheme:
+cssprimary: #003893 (BiH blue)
+secondary: #FECB00 (BiH yellow)
+success: #10B981
+error: #EF4444
+warning: #F59E0B
+background: #F3F4F6
+text: #1F2937
+muted: #6B7280
+Accessibility Features:
+
+Large touch targets (minimum 60x60px)
+High contrast text (WCAG AA compliant)
+Clear visual feedback
+Simple language
+Audio cues for vision impaired
+Keyboard navigation support
+
+Text Content (Bosnian):
+Welcome:
+
+"Dobrodošli na glasačko mjesto"
+"Počni glasanje"
+
+Instructions:
+
+"Uputstvo za glasanje"
+"Označite vašeg kandidata"
+"Preklopite glasački listić"
+"Ubacite listić u skener"
+"Razumijem"
+
+Scanning:
+
+"Skener je spreman"
+"Ubacite listić"
+"Skeniranje u toku..."
+"Molimo sačekajte"
+
+Results:
+
+"Uspješno!"
+"Vaš glas je zabilježen"
+"Greška pri skeniranju"
+"Pokušaj ponovo"
+"Novi listić"
+"Pozovi pomoć"
+"Završi"
+
+Errors:
+
+"Označeno više kandidata"
+"Listić je oštećen"
+"Nečitljive oznake"
+"Nevažeći listić"
+
+Special Features:
+
+Kiosk Mode:
+
+Full screen
+No browser UI
+Disabled right-click
+Disabled text selection
+Auto-restart on crash
+
+
+Error Recovery:
+
+Graceful error handling
+Clear user guidance
+Option to call assistance
+
+
+Privacy:
+
+No storage of voting choices
+Only statistical data saved
+Auto-clear after each session
+
+
+
+File Structure:
+/src
+  /components
+    - WelcomeScreen.jsx
+    - InstructionScreen.jsx
+    - ScannerScreen.jsx
+    - ScanningProgress.jsx
+    - ResultScreen.jsx
+    - AdminPanel.jsx
+  /hooks
+    - useScanner.js
+    - useTimeout.js
+    - useSound.js
+  /utils
+    - mockData.js
+    - statistics.js
+  - App.jsx
+  - main.jsx
+Create a polished, user-friendly voting scanner application with smooth animations, clear instructions, and robust error handling suitable for public use in voting locations.
+
+This prompt will create a complete tablet voting application with a clear user flow, proper error handling, and all necessary screens for the voting process.
