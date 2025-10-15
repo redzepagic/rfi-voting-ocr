@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { AnimatePresence } from "framer-motion";
-import { QueryClientProvider, useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "./lib/queryClient";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
@@ -12,7 +12,8 @@ import { SuccessScreen } from "@/components/SuccessScreen";
 import { ErrorScreen } from "@/components/ErrorScreen";
 import { InvalidScreen } from "@/components/InvalidScreen";
 import { AdminPanel } from "@/components/AdminPanel";
-import type { ScanResult, VotingStats, VotingLocation } from "@shared/schema";
+import type { ScanResult, VotingStats } from "@shared/schema";
+import { mockLocation, mockStats, simulateMockScan } from "./lib/mockData";
 
 type Screen = 
   | "welcome" 
@@ -30,45 +31,12 @@ function VotingApp() {
   const [scanningStep, setScanningStep] = useState(0);
   const [adminOpen, setAdminOpen] = useState(false);
   const [forcedResult, setForcedResult] = useState<"success" | "error" | null>(null);
-  
+  const [stats, setStats] = useState<VotingStats>(mockStats);
+  const [location] = useState(mockLocation);
+
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<NodeJS.Timeout | null>(null);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const { data: stats, refetch: refetchStats } = useQuery<VotingStats>({
-    queryKey: ["/api/stats"],
-  });
-
-  const { data: location } = useQuery<VotingLocation>({
-    queryKey: ["/api/location"],
-  });
-
-  const scanMutation = useMutation({
-    mutationFn: async (forceResult?: "success" | "error") => {
-      return apiRequest<ScanResult>("POST", "/api/scan", { forceResult });
-    },
-    onSuccess: () => {
-      refetchStats();
-    },
-  });
-
-  const resetStatsMutation = useMutation({
-    mutationFn: async () => {
-      return apiRequest<VotingStats>("POST", "/api/stats/reset", {});
-    },
-    onSuccess: () => {
-      refetchStats();
-    },
-  });
-
-  const updateStatsMutation = useMutation({
-    mutationFn: async (updates: { retries: number }) => {
-      return apiRequest<VotingStats>("POST", "/api/stats/update", updates);
-    },
-    onSuccess: () => {
-      refetchStats();
-    },
-  });
 
   const resetInactivityTimer = useCallback(() => {
     if (inactivityTimerRef.current) {
@@ -126,13 +94,29 @@ function VotingApp() {
 
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    const result = await scanMutation.mutateAsync(forcedResult || undefined);
-    
+    // Use mock data instead of API call
+    const result = simulateMockScan(forcedResult || undefined);
+
+    // Update stats
+    setStats(prev => ({
+      ...prev,
+      totalScans: prev.totalScans + 1,
+      successful: result.result === "success" ? prev.successful + 1 : prev.successful,
+      failed: result.result === "error" ? prev.failed + 1 : prev.failed,
+      invalid: result.result === "invalid" ? prev.invalid + 1 : prev.invalid,
+      multipleSelections: result.errorType === "multiple_selections" || result.result === "invalid"
+        ? prev.multipleSelections + 1
+        : prev.multipleSelections,
+      damaged: result.errorType === "damaged" ? prev.damaged + 1 : prev.damaged,
+      unreadable: result.errorType === "unreadable" ? prev.unreadable + 1 : prev.unreadable,
+      updatedAt: new Date(),
+    }));
+
     setForcedResult(null);
-    
+
     // Set scan result first, then update screen to avoid race condition
     setScanResult(result);
-    
+
     // Small delay to ensure state is updated before screen transition
     await new Promise(resolve => setTimeout(resolve, 50));
 
@@ -143,7 +127,7 @@ function VotingApp() {
     } else {
       setCurrentScreen("invalid");
     }
-  }, [forcedResult, scanMutation]);
+  }, [forcedResult]);
 
   const handleStart = () => {
     setCurrentScreen("instructions");
@@ -170,9 +154,11 @@ function VotingApp() {
   };
 
   const handleRetry = () => {
-    if (stats) {
-      updateStatsMutation.mutate({ retries: stats.retries + 1 });
-    }
+    setStats(prev => ({
+      ...prev,
+      retries: prev.retries + 1,
+      updatedAt: new Date(),
+    }));
     setCurrentScreen("scanner");
   };
 
@@ -207,7 +193,7 @@ function VotingApp() {
   };
 
   const handleResetStats = () => {
-    resetStatsMutation.mutate();
+    setStats(mockStats);
   };
 
   useEffect(() => {
